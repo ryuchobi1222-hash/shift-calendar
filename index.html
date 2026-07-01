@@ -3,68 +3,131 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>希望休カレンダー v2</title>
+  <meta name="theme-color" content="#5f8f6b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="希望休" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>希望休</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon.svg" />
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-  <main class="app">
-    <header class="header">
+  <main class="app-shell">
+    <header class="app-header">
       <div>
-        <p class="label">希望休Webアプリ</p>
-        <h1 id="monthTitle">----</h1>
+        <p class="app-kicker">Shift Request</p>
+        <h1 id="monthTitle">希望休</h1>
       </div>
 
-      <div class="monthButtons">
-        <button id="prevBtn" type="button">前月</button>
-        <button id="todayBtn" type="button">今月</button>
-        <button id="nextBtn" type="button">翌月</button>
-      </div>
+      <button id="settingsBtn" class="circle-button" type="button" aria-label="設定">
+        <span>⚙️</span>
+      </button>
     </header>
 
-    <section class="summary">
-      <div>
-        <span class="summaryLabel">希望休</span>
+    <section class="month-card glass">
+      <button id="prevBtn" class="nav-button" type="button" aria-label="前月">‹</button>
+      <button id="todayBtn" class="today-button" type="button">今月へ戻る</button>
+      <button id="nextBtn" class="nav-button" type="button" aria-label="翌月">›</button>
+    </section>
+
+    <section class="dashboard">
+      <article class="dash-card glass">
+        <span>希望休</span>
         <strong id="offCount">0日</strong>
-      </div>
-      <div>
-        <span class="summaryLabel">出勤</span>
+      </article>
+
+      <article class="dash-card glass">
+        <span>出勤</span>
         <strong id="workCount">0日</strong>
-      </div>
+      </article>
+
+      <article class="dash-card glass">
+        <span>残り</span>
+        <strong id="remainCount">10日</strong>
+      </article>
+    </section>
+
+    <section class="limit-card glass">
       <div>
-        <span class="summaryLabel">平日希望休</span>
-        <strong id="requestCount">0日</strong>
+        <span class="small-label">希望休上限</span>
+        <strong><span id="limitLabel">10</span>日まで</strong>
       </div>
-      <div>
-        <span class="summaryLabel">残り</span>
-        <strong id="remainCount">--日</strong>
+
+      <input id="limitInput" type="range" min="0" max="20" value="10" />
+    </section>
+
+    <section class="calendar-card glass">
+      <div class="week-row">
+        <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
       </div>
+
+      <div id="calendar" class="calendar-grid" aria-label="カレンダー"></div>
     </section>
 
-    <section class="limitBox">
-      <label for="limitInput">希望休上限</label>
-      <div>
-        <input id="limitInput" type="number" min="0" max="31" inputmode="numeric" />
-        <span>日まで</span>
+    <section class="action-grid">
+      <button id="lineBtn" class="action primary" type="button">
+        <span>💬</span>
+        LINEで送る
+      </button>
+
+      <button id="pdfBtn" class="action" type="button">
+        <span>📄</span>
+        PDF
+      </button>
+
+      <button id="clearBtn" class="action danger" type="button">
+        <span>↺</span>
+        リセット
+      </button>
+    </section>
+
+    <section class="preview-card glass">
+      <div class="preview-header">
+        <span>送信プレビュー</span>
+        <button id="copyBtn" type="button">コピー</button>
       </div>
+      <textarea id="copyText" readonly></textarea>
     </section>
-
-    <section class="weekdays" aria-label="曜日">
-      <div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div>
-    </section>
-
-    <section id="calendar" class="calendar" aria-label="カレンダー"></section>
-
-    <section class="actions">
-      <button id="copyBtn" type="button" class="primary">希望休をコピー</button>
-      <button id="clearBtn" type="button" class="danger">この月をリセット</button>
-    </section>
-
-    <textarea id="copyText" class="copyText" readonly aria-label="コピー内容"></textarea>
-
-    <p class="hint">
-      日付をタップすると「出勤 ⇄ 希望休」に切り替わります。土日は最初から希望休扱いです。平日に選んだ希望休だけ「平日希望休」に数えます。
-    </p>
   </main>
+
+  <div id="toast" class="toast hidden">保存しました</div>
+
+  <div id="memoModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-sheet glass">
+      <div class="sheet-handle"></div>
+      <h2 id="memoTitle">メモ</h2>
+      <p class="modal-help">日付を長押しするとメモを編集できます。</p>
+
+      <textarea id="memoInput" placeholder="例：🏥 病院、🎂 誕生日、✈️ 旅行"></textarea>
+
+      <div class="modal-actions">
+        <button id="deleteMemoBtn" class="danger-soft" type="button">削除</button>
+        <button id="cancelMemoBtn" type="button">閉じる</button>
+        <button id="saveMemoBtn" class="primary" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-sheet glass">
+      <div class="sheet-handle"></div>
+      <h2>設定</h2>
+      <p class="modal-help">好きなテーマカラーを選べます。</p>
+
+      <div class="theme-list">
+        <button data-theme="nature" type="button"><span>🌿</span> Nature</button>
+        <button data-theme="blue" type="button"><span>💙</span> Blue</button>
+        <button data-theme="red" type="button"><span>❤️</span> Red</button>
+        <button data-theme="gray" type="button"><span>🩶</span> Gray</button>
+        <button data-theme="purple" type="button"><span>🟣</span> Purple</button>
+      </div>
+
+      <button id="closeSettingsBtn" class="full-button" type="button">閉じる</button>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
