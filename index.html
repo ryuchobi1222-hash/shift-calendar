@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>希望休カレンダー v1</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div>
+        <p class="label">希望休Webアプリ</p>
+        <h1 id="monthTitle">----</h1>
+      </div>
+      <div class="monthButtons">
+        <button id="prevBtn" type="button">前月</button>
+        <button id="todayBtn" type="button">今月</button>
+        <button id="nextBtn" type="button">翌月</button>
+      </div>
+    </header>
+
+    <section class="summary">
+      <div>
+        <span class="summaryLabel">希望休</span>
+        <strong id="offCount">0日</strong>
+      </div>
+      <div>
+        <span class="summaryLabel">出勤</span>
+        <strong id="workCount">0日</strong>
+      </div>
+    </section>
+
+    <section class="weekdays" aria-label="曜日">
+      <div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div>
+    </section>
+
+    <section id="calendar" class="calendar" aria-label="カレンダー"></section>
+
+    <section class="actions">
+      <button id="copyBtn" type="button" class="primary">希望休をコピー</button>
+      <button id="clearBtn" type="button" class="danger">この月をリセット</button>
+    </section>
+
+    <p class="hint">
+      日付をタップすると「出勤 ⇄ 希望休」に切り替わります。土日は最初から希望休になっています。
+    </p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
