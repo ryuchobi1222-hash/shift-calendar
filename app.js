@@ -393,3 +393,14 @@ copyBtn.addEventListener("click", async () => {
 });
 
 render()
+copyBtn.textContent = "LINEで送る";
+
+copyBtn.addEventListener("click", () => {
+
+  const text = encodeURIComponent(copyText.value);
+
+  const lineUrl = `https://line.me/R/msg/text/?${text}`;
+
+  window.location.href = lineUrl;
+
+});
