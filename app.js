@@ -1,18 +1,18 @@
 const calendarEl = document.getElementById("calendar");
 const monthTitleEl = document.getElementById("monthTitle");
-const offCountEl = document.getElementById("offCount");
+const requestCountEl = document.getElementById("requestCount");
+const weekdayRequestCountEl = document.getElementById("weekdayRequestCount");
 const workCountEl = document.getElementById("workCount");
 const remainCountEl = document.getElementById("remainCount");
 const limitInput = document.getElementById("limitInput");
-const limitLabel = document.getElementById("limitLabel");
 
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const todayBtn = document.getElementById("todayBtn");
 const lineBtn = document.getElementById("lineBtn");
+const copyBtn = document.getElementById("copyBtn");
 const pdfBtn = document.getElementById("pdfBtn");
 const clearBtn = document.getElementById("clearBtn");
-const copyBtn = document.getElementById("copyBtn");
 const copyText = document.getElementById("copyText");
 
 const memoModal = document.getElementById("memoModal");
@@ -21,29 +21,21 @@ const memoInput = document.getElementById("memoInput");
 const saveMemoBtn = document.getElementById("saveMemoBtn");
 const deleteMemoBtn = document.getElementById("deleteMemoBtn");
 const cancelMemoBtn = document.getElementById("cancelMemoBtn");
-
-const settingsBtn = document.getElementById("settingsBtn");
-const settingsModal = document.getElementById("settingsModal");
-const closeSettingsBtn = document.getElementById("closeSettingsBtn");
 const toast = document.getElementById("toast");
 
 let current = new Date();
 current.setDate(1);
 let selectedMemoDate = null;
-let suppressNextClick = false;
+let longPress = false;
 
 const defaultLimit = 10;
 const weekNames = ["日", "月", "火", "水", "木", "金", "土"];
 
-function showToast(message) {
-  toast.textContent = message;
+function showToast(text) {
+  toast.textContent = text;
   toast.classList.remove("hidden");
   clearTimeout(showToast.timer);
-  showToast.timer = setTimeout(() => toast.classList.add("hidden"), 1400);
-}
-
-function haptic() {
-  if ("vibrate" in navigator) navigator.vibrate(8);
+  showToast.timer = setTimeout(() => toast.classList.add("hidden"), 1300);
 }
 
 function monthKey(year, monthIndex) {
@@ -51,11 +43,11 @@ function monthKey(year, monthIndex) {
 }
 
 function keyFor(year, monthIndex) {
-  return `kiboukyu-v4-${monthKey(year, monthIndex)}`;
+  return `kiboukyu-clean-${monthKey(year, monthIndex)}`;
 }
 
 function limitKeyFor(year, monthIndex) {
-  return `kiboukyu-v4-limit-${monthKey(year, monthIndex)}`;
+  return `kiboukyu-clean-limit-${monthKey(year, monthIndex)}`;
 }
 
 function dateKey(year, monthIndex, day) {
@@ -102,19 +94,16 @@ function getRecord(data, key) {
 
 function getStatus(year, monthIndex, day, data) {
   if (isWeekend(year, monthIndex, day)) return "fixed";
-  const key = dateKey(year, monthIndex, day);
-  return data[key]?.status || "work";
+  const rec = data[dateKey(year, monthIndex, day)];
+  return rec?.status || "work";
 }
 
 function setStatus(year, monthIndex, day, status, data) {
   if (isWeekend(year, monthIndex, day)) return;
-
   const key = dateKey(year, monthIndex, day);
   const rec = getRecord(data, key);
   rec.status = status;
-
   if (rec.status === "work" && !rec.memo) delete data[key];
-
   saveData(year, monthIndex, data);
 }
 
@@ -126,14 +115,8 @@ function setMemo(year, monthIndex, day, memo, data) {
   const key = dateKey(year, monthIndex, day);
   const rec = getRecord(data, key);
   rec.memo = memo.trim();
-
   if (rec.status === "work" && !rec.memo) delete data[key];
-
   saveData(year, monthIndex, data);
-}
-
-function formatMonthTitle(year, monthIndex) {
-  return `${year}年${monthIndex + 1}月`;
 }
 
 function render() {
@@ -142,10 +125,8 @@ function render() {
   const data = loadData(year, monthIndex);
   const limit = loadLimit(year, monthIndex);
 
-  monthTitleEl.textContent = formatMonthTitle(year, monthIndex);
+  monthTitleEl.textContent = `${year}年${monthIndex + 1}月`;
   limitInput.value = limit;
-  limitLabel.textContent = limit;
-
   calendarEl.innerHTML = "";
 
   const firstWeek = new Date(year, monthIndex, 1).getDay();
@@ -157,19 +138,24 @@ function render() {
     calendarEl.appendChild(blank);
   }
 
-  let requestCount = 0;
+  let totalOffCount = 0;
   let workCount = 0;
+  let weekdayRequestCount = 0;
   const requestDays = [];
   const memos = [];
 
   for (let day = 1; day <= lastDay; day++) {
     const status = getStatus(year, monthIndex, day, data);
     const memo = getMemo(year, monthIndex, day, data);
+    const weekend = isWeekend(year, monthIndex, day);
 
-    if (status === "off") {
-      requestCount++;
+    if (status === "fixed") {
+      totalOffCount++;
+    } else if (status === "off") {
+      totalOffCount++;
+      weekdayRequestCount++;
       requestDays.push(day);
-    } else if (status === "work") {
+    } else {
       workCount++;
     }
 
@@ -186,79 +172,73 @@ function render() {
     const label = status === "fixed" ? "固定休" : status === "off" ? "希望休" : "出勤";
 
     dayEl.innerHTML = `
-      <span class="day-number">${day}</span>
-      <span class="day-status">${label}</span>
-      ${memo ? '<span class="memo-dot"></span>' : ""}
+      <span class="dayNumber">${day}</span>
+      <span class="status">${label}</span>
+      ${memo ? '<span class="memoDot"></span>' : ""}
     `;
 
-    let pressTimer = null;
+    let timer = null;
 
     const startPress = () => {
-      clearTimeout(pressTimer);
-      pressTimer = setTimeout(() => {
-        suppressNextClick = true;
-        haptic();
+      longPress = false;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        longPress = true;
         openMemo(year, monthIndex, day);
       }, 560);
     };
 
-    const cancelPress = () => {
-      clearTimeout(pressTimer);
-    };
+    const cancelPress = () => clearTimeout(timer);
 
     dayEl.addEventListener("touchstart", startPress, { passive: true });
     dayEl.addEventListener("touchmove", cancelPress, { passive: true });
     dayEl.addEventListener("touchend", cancelPress);
     dayEl.addEventListener("mousedown", startPress);
-    dayEl.addEventListener("mouseleave", cancelPress);
     dayEl.addEventListener("mouseup", cancelPress);
+    dayEl.addEventListener("mouseleave", cancelPress);
 
     dayEl.addEventListener("click", () => {
-      if (suppressNextClick) {
-        suppressNextClick = false;
+      if (longPress) {
+        longPress = false;
         return;
       }
-
-      if (status === "fixed") return;
+      if (weekend) return;
 
       const freshData = loadData(year, monthIndex);
       const currentStatus = getStatus(year, monthIndex, day, freshData);
       setStatus(year, monthIndex, day, currentStatus === "off" ? "work" : "off", freshData);
-      haptic();
       render();
     });
 
     calendarEl.appendChild(dayEl);
   }
 
-  offCountEl.textContent = `${requestCount}日`;
-  workCountEl.textContent = `${workCount}日`;
+  const remain = limit - weekdayRequestCount;
 
-  const remain = limit - requestCount;
+  requestCountEl.textContent = `${totalOffCount}日`;
+  workCountEl.textContent = `${workCount}日`;
+  weekdayRequestCountEl.textContent = `${weekdayRequestCount}日`;
   remainCountEl.textContent = `${remain}日`;
   remainCountEl.style.color = remain < 0 ? "var(--danger)" : "var(--text)";
 
-  copyText.value = makeText(year, monthIndex, requestDays, requestCount, limit, memos);
+  copyText.value = makeText(year, monthIndex, requestDays, weekdayRequestCount, limit, memos);
 }
 
 function makeText(year, monthIndex, requestDays, requestCount, limit, memos) {
   const month = monthIndex + 1;
 
   const requestText = requestDays.length
-    ? requestDays
-        .map((day) => `${month}/${day}（${weekNames[new Date(year, monthIndex, day).getDay()]}）`)
-        .join("\n")
+    ? requestDays.map((day) => `${month}/${day}（${weekNames[new Date(year, monthIndex, day).getDay()]}）`).join("\n")
     : "なし";
 
   const memoText = memos.length
-    ? memos
-        .map((m) => `${month}/${m.day}（${weekNames[new Date(year, monthIndex, m.day).getDay()]}） ${m.memo}`)
-        .join("\n")
+    ? memos.map((m) => `${month}/${m.day}（${weekNames[new Date(year, monthIndex, m.day).getDay()]}） ${m.memo}`).join("\n")
     : "";
 
   return [
     `【${year}年${month}月 希望休】`,
     "",
+    `希望休：`,
     requestText,
     "",
     `希望休数：${requestCount}日 / 上限${limit}日`,
@@ -274,19 +254,15 @@ function openMemo(year, monthIndex, day) {
   memoTitle.textContent = `${monthIndex + 1}/${day} のメモ`;
   memoInput.value = getMemo(year, monthIndex, day, data);
   memoModal.classList.remove("hidden");
-  memoModal.setAttribute("aria-hidden", "false");
-  setTimeout(() => memoInput.focus(), 120);
 }
 
 function closeMemo() {
   memoModal.classList.add("hidden");
-  memoModal.setAttribute("aria-hidden", "true");
   selectedMemoDate = null;
 }
 
 saveMemoBtn.addEventListener("click", () => {
   if (!selectedMemoDate) return;
-
   const { year, monthIndex, day } = selectedMemoDate;
   const data = loadData(year, monthIndex);
   setMemo(year, monthIndex, day, memoInput.value, data);
@@ -297,7 +273,6 @@ saveMemoBtn.addEventListener("click", () => {
 
 deleteMemoBtn.addEventListener("click", () => {
   if (!selectedMemoDate) return;
-
   const { year, monthIndex, day } = selectedMemoDate;
   const data = loadData(year, monthIndex);
   setMemo(year, monthIndex, day, "", data);
@@ -307,19 +282,21 @@ deleteMemoBtn.addEventListener("click", () => {
 });
 
 cancelMemoBtn.addEventListener("click", closeMemo);
-
-memoModal.addEventListener("click", (event) => {
-  if (event.target === memoModal) closeMemo();
+memoModal.addEventListener("click", (e) => {
+  if (e.target === memoModal) closeMemo();
 });
 
-function changeMonth(amount) {
-  current.setMonth(current.getMonth() + amount);
+prevBtn.addEventListener("click", () => {
+  current.setMonth(current.getMonth() - 1);
   current.setDate(1);
   render();
-}
+});
 
-prevBtn.addEventListener("click", () => changeMonth(-1));
-nextBtn.addEventListener("click", () => changeMonth(1));
+nextBtn.addEventListener("click", () => {
+  current.setMonth(current.getMonth() + 1);
+  current.setDate(1);
+  render();
+});
 
 todayBtn.addEventListener("click", () => {
   current = new Date();
@@ -328,16 +305,12 @@ todayBtn.addEventListener("click", () => {
 });
 
 limitInput.addEventListener("input", () => {
-  const value = Number(limitInput.value || 0);
-  saveLimit(current.getFullYear(), current.getMonth(), value);
-  limitLabel.textContent = value;
+  saveLimit(current.getFullYear(), current.getMonth(), Number(limitInput.value || 0));
   render();
 });
 
 clearBtn.addEventListener("click", () => {
-  const title = formatMonthTitle(current.getFullYear(), current.getMonth());
-  if (!confirm(`${title}の希望休とメモをリセットしますか？`)) return;
-
+  if (!confirm(`${current.getFullYear()}年${current.getMonth() + 1}月をリセットしますか？`)) return;
   localStorage.removeItem(keyFor(current.getFullYear(), current.getMonth()));
   render();
   showToast("リセットしました");
@@ -355,7 +328,7 @@ copyBtn.addEventListener("click", async () => {
   } catch {
     copyText.focus();
     copyText.select();
-    showToast("長押しでコピーしてください");
+    showToast("長押しでコピーしてね");
   }
 });
 
@@ -363,35 +336,16 @@ pdfBtn.addEventListener("click", () => {
   window.print();
 });
 
-settingsBtn.addEventListener("click", () => {
-  settingsModal.classList.remove("hidden");
-  settingsModal.setAttribute("aria-hidden", "false");
-});
-
-closeSettingsBtn.addEventListener("click", () => {
-  settingsModal.classList.add("hidden");
-  settingsModal.setAttribute("aria-hidden", "true");
-});
-
-settingsModal.addEventListener("click", (event) => {
-  if (event.target === settingsModal) {
-    settingsModal.classList.add("hidden");
-    settingsModal.setAttribute("aria-hidden", "true");
-  }
-});
-
-document.querySelectorAll("[data-theme]").forEach((button) => {
-  button.addEventListener("click", () => {
-    const theme = button.dataset.theme;
+document.querySelectorAll("[data-theme]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const theme = btn.dataset.theme;
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("kiboukyu-v4-theme", theme);
-    settingsModal.classList.add("hidden");
-    settingsModal.setAttribute("aria-hidden", "true");
-    showToast("テーマを変更しました");
+    localStorage.setItem("kiboukyu-clean-theme", theme);
+    showToast("色を変更しました");
   });
 });
 
-const savedTheme = localStorage.getItem("kiboukyu-v4-theme");
+const savedTheme = localStorage.getItem("kiboukyu-clean-theme");
 if (savedTheme) document.documentElement.dataset.theme = savedTheme;
 
 render();

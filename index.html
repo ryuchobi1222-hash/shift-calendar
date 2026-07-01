@@ -1,353 +1,88 @@
 <!doctype html>
-
 <html lang="ja">
-
 <head>
-
-<meta charset="utf-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>希望休</title>
-
-<style>
-
-:root{--bg:#f7f4ee;--card:#fff;--text:#2d2926;--muted:#80796f;--line:#e8ded2;--accent:#4f8a63;--light:#dff0e5;--fixed:#f0ebe4;--danger:#b6463f}
-
-[data-theme=blue]{--accent:#3478f6;--light:#e5efff;--bg:#f7faff}
-
-[data-theme=red]{--accent:#c75050;--light:#ffe8e8;--bg:#fff8f8}
-
-[data-theme=gray]{--accent:#6e747c;--light:#eee;--bg:#f7f7f7}
-
-[data-theme=purple]{--accent:#8b5cf6;--light:#efe8ff;--bg:#fbf8ff}
-
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}
-
-.app{width:min(100%,760px);margin:auto;padding:24px 14px 40px}
-
-.label{margin:0 0 6px;color:var(--muted);font-size:14px;font-weight:800}
-
-h1{margin:0 0 18px;font-size:38px;letter-spacing:-.04em}
-
-.monthButtons{display:flex;gap:10px;margin-bottom:18px}
-
-button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:12px 17px;font-weight:800;font-size:15px}
-
-button:active{transform:scale(.96);opacity:.8}
-
-.summary{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-
-.summary>div,.limitBox,.themeBox{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px}
-
-.summary span{display:block;color:var(--muted);font-weight:800;font-size:14px;margin-bottom:8px}
-
-.summary strong{font-size:29px}
-
-.limitBox{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:var(--muted);font-weight:800}
-
-.limitBox div{display:flex;align-items:center;gap:10px;color:var(--text);font-size:18px}
-
-input{width:70px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:16px;padding:10px;text-align:center;font-size:20px;font-weight:900}
-
-.weekdays,.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
-
-.weekdays{color:var(--muted);font-weight:900;text-align:center;margin-bottom:8px}
-
-.day{min-height:74px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:18px;padding:9px 7px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;position:relative}
-
-.day.blank{background:transparent;border-color:transparent}
-
-.num{font-size:18px;font-weight:900}
-
-.status{width:fit-content;background:var(--fixed);color:var(--muted);border-radius:999px;padding:4px 7px;font-size:11px;font-weight:900}
-
-.day.off{background:var(--light);border-color:var(--accent)}
-
-.day.off .num{color:var(--accent)}
-
-.day.off .status{background:var(--accent);color:#fff}
-
-.day.fixed{background:var(--fixed);color:var(--muted)}
-
-.day.fixed .num{color:var(--accent)}
-
-.day.today{outline:4px solid rgba(218,180,113,.32)}
-
-.dot{position:absolute;top:7px;right:7px;width:7px;height:7px;background:var(--accent);border-radius:50%}
-
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
-
-.primary{background:var(--accent);color:white;border-color:var(--accent)}
-
-.danger{color:var(--danger)}
-
-.themeBox{margin-top:14px;display:flex;justify-content:space-between;align-items:center}
-
-.themeBox>span{color:var(--muted);font-weight:800}
-
-.themes{display:flex;gap:8px}.themes button{width:42px;height:42px;padding:0;font-size:20px}
-
-textarea{width:100%;min-height:120px;margin-top:14px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:18px;padding:14px;line-height:1.6}
-
-.hint{color:var(--muted);line-height:1.7;font-weight:700}
-
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:grid;place-items:end center;padding:14px;z-index:10}
-
-.hidden{display:none!important}
-
-.modalInner{width:min(100%,520px);background:var(--card);border-radius:26px;padding:18px}
-
-.modalActions{display:grid;grid-template-columns:.8fr .8fr 1fr;gap:10px;margin-top:12px}
-
-.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:rgba(0,0,0,.78);color:white;padding:10px 15px;border-radius:999px;font-weight:800}
-
-@media(max-width:430px){h1{font-size:34px}.day{min-height:64px;border-radius:15px;padding:8px 5px}.num{font-size:16px}.status{font-size:10px;padding:3px 6px}.themeBox{display:block}.themes{margin-top:10px}}
-
-</style>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7f4ee" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="希望休" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>希望休</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-
-<main class="app">
-
-<p class="label">希望休Webアプリ</p>
-
-<h1 id="monthTitle">----</h1>
-
-<section class="monthButtons">
-
-<button id="prevBtn">前月</button>
-
-<button id="todayBtn">今月</button>
-
-<button id="nextBtn">翌月</button>
-
-</section>
-
-<section class="summary">
-
-<div><span>希望休</span><strong id="requestCount">0日</strong></div>
-
-<div><span>出勤</span><strong id="workCount">0日</strong></div>
-
-<div><span>平日希望休</span><strong id="weekdayRequestCount">0日</strong></div>
-
-<div><span>残り</span><strong id="remainCount">10日</strong></div>
-
-</section>
-
-<section class="limitBox">
-
-<span>希望休上限</span>
-
-<div><input id="limitInput" type="number" min="0" max="31" inputmode="numeric"><span>日まで</span></div>
-
-</section>
-
-<section class="weekdays"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></section>
-
-<section id="calendar" class="calendar"></section>
-
-<section class="actions">
-
-<button id="lineBtn" class="primary">LINEで送る</button>
-
-<button id="copyBtn">コピー</button>
-
-<button id="pdfBtn">PDF</button>
-
-<button id="clearBtn" class="danger">この月をリセット</button>
-
-</section>
-
-<section class="themeBox">
-
-<span>色テーマ</span>
-
-<div class="themes">
-
-<button data-theme="nature">🌿</button>
-
-<button data-theme="blue">💙</button>
-
-<button data-theme="red">❤️</button>
-
-<button data-theme="gray">🩶</button>
-
-<button data-theme="purple">🟣</button>
-
-</div>
-
-</section>
-
-<textarea id="copyText" readonly></textarea>
-
-<p class="hint">日付をタップすると「出勤 ⇄ 希望休」に切り替わります。土日は固定休です。日付を長押しするとメモを入れられます。</p>
-
-</main>
-
-<div id="memoModal" class="modal hidden">
-
-<div class="modalInner">
-
-<h2 id="memoTitle">メモ</h2>
-
-<textarea id="memoInput" placeholder="例：🏥 病院、🎂 誕生日、✈️ 旅行"></textarea>
-
-<div class="modalActions">
-
-<button id="deleteMemoBtn" class="danger">削除</button>
-
-<button id="cancelMemoBtn">閉じる</button>
-
-<button id="saveMemoBtn" class="primary">保存</button>
-
-</div>
-
-</div>
-
-</div>
-
-<div id="toast" class="toast hidden">コピーしました</div>
-
-<script>
-
-const calendarEl=document.getElementById("calendar"),monthTitleEl=document.getElementById("monthTitle"),requestCountEl=document.getElementById("requestCount"),weekdayRequestCountEl=document.getElementById("weekdayRequestCount"),workCountEl=document.getElementById("workCount"),remainCountEl=document.getElementById("remainCount"),limitInput=document.getElementById("limitInput"),copyText=document.getElementById("copyText"),memoModal=document.getElementById("memoModal"),memoTitle=document.getElementById("memoTitle"),memoInput=document.getElementById("memoInput"),toast=document.getElementById("toast");
-
-let current=new Date();current.setDate(1);let selectedMemoDate=null,longPress=false;
-
-const weekNames=["日","月","火","水","木","金","土"],defaultLimit=10;
-
-function showToast(t){toast.textContent=t;toast.classList.remove("hidden");clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.add("hidden"),1300)}
-
-function monthKey(y,m){return `${y}-${String(m+1).padStart(2,"0")}`}
-
-function keyFor(y,m){return `kiboukyu-final-${monthKey(y,m)}`}
-
-function limitKeyFor(y,m){return `kiboukyu-final-limit-${monthKey(y,m)}`}
-
-function dateKey(y,m,d){return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`}
-
-function loadData(y,m){try{return JSON.parse(localStorage.getItem(keyFor(y,m)))||{}}catch{return {}}}
-
-function saveData(y,m,data){localStorage.setItem(keyFor(y,m),JSON.stringify(data))}
-
-function loadLimit(y,m){const s=localStorage.getItem(limitKeyFor(y,m));return s===null?defaultLimit:Number(s)}
-
-function saveLimit(y,m,v){localStorage.setItem(limitKeyFor(y,m),String(v))}
-
-function isWeekend(y,m,d){const w=new Date(y,m,d).getDay();return w===0||w===6}
-
-function isToday(y,m,d){const t=new Date();return t.getFullYear()===y&&t.getMonth()===m&&t.getDate()===d}
-
-function getRecord(data,k){if(!data[k])data[k]={status:"work",memo:""};return data[k]}
-
-function getStatus(y,m,d,data){if(isWeekend(y,m,d))return"fixed";return data[dateKey(y,m,d)]?.status||"work"}
-
-function setStatus(y,m,d,status,data){if(isWeekend(y,m,d))return;const k=dateKey(y,m,d),r=getRecord(data,k);r.status=status;if(r.status==="work"&&!r.memo)delete data[k];saveData(y,m,data)}
-
-function getMemo(y,m,d,data){return data[dateKey(y,m,d)]?.memo||""}
-
-function setMemo(y,m,d,memo,data){const k=dateKey(y,m,d),r=getRecord(data,k);r.memo=memo.trim();if(r.status==="work"&&!r.memo)delete data[k];saveData(y,m,data)}
-
-function render(){
-
-const y=current.getFullYear(),m=current.getMonth(),data=loadData(y,m),limit=loadLimit(y,m);
-
-monthTitleEl.textContent=`${y}年${m+1}月`;limitInput.value=limit;calendarEl.innerHTML="";
-
-const first=new Date(y,m,1).getDay(),last=new Date(y,m+1,0).getDate();
-
-for(let i=0;i<first;i++){const b=document.createElement("div");b.className="day blank";calendarEl.appendChild(b)}
-
-let totalOff=0,work=0,weekdayReq=0,requestDays=[],memos=[];
-
-for(let d=1;d<=last;d++){
-
-const status=getStatus(y,m,d,data),memo=getMemo(y,m,d,data),weekend=isWeekend(y,m,d);
-
-if(status==="fixed")totalOff++;else if(status==="off"){totalOff++;weekdayReq++;requestDays.push(d)}else work++;
-
-if(memo)memos.push({day:d,memo});
-
-const el=document.createElement("button");el.type="button";el.className="day";
-
-if(status==="off")el.classList.add("off");if(status==="fixed")el.classList.add("fixed");if(isToday(y,m,d))el.classList.add("today");
-
-const label=status==="fixed"?"固定休":status==="off"?"希望休":"出勤";
-
-el.innerHTML=`<span class="num">${d}</span><span class="status">${label}</span>${memo?'<span class="dot"></span>':""}`;
-
-let timer=null;
-
-const start=()=>{longPress=false;clearTimeout(timer);timer=setTimeout(()=>{longPress=true;openMemo(y,m,d)},560)};
-
-const cancel=()=>clearTimeout(timer);
-
-el.addEventListener("touchstart",start,{passive:true});el.addEventListener("touchmove",cancel,{passive:true});el.addEventListener("touchend",cancel);
-
-el.addEventListener("mousedown",start);el.addEventListener("mouseup",cancel);el.addEventListener("mouseleave",cancel);
-
-el.addEventListener("click",()=>{if(longPress){longPress=false;return}if(weekend)return;const fresh=loadData(y,m),cur=getStatus(y,m,d,fresh);setStatus(y,m,d,cur==="off"?"work":"off",fresh);render()});
-
-calendarEl.appendChild(el)}
-
-const remain=limit-weekdayReq;
-
-requestCountEl.textContent=`${totalOff}日`;workCountEl.textContent=`${work}日`;weekdayRequestCountEl.textContent=`${weekdayReq}日`;remainCountEl.textContent=`${remain}日`;remainCountEl.style.color=remain<0?"var(--danger)":"var(--text)";
-
-copyText.value=makeText(y,m,requestDays,weekdayReq,limit,memos)}
-
-function makeText(y,m,days,count,limit,memos){
-
-const month=m+1;
-
-const req=days.length?days.map(d=>`${month}/${d}（${weekNames[new Date(y,m,d).getDay()]}）`).join("\\n"):"なし";
-
-const memo=memos.length?memos.map(x=>`${month}/${x.day}（${weekNames[new Date(y,m,x.day).getDay()]}） ${x.memo}`).join("\\n"):"";
-
-return [`【${y}年${month}月 希望休】`,"","希望休：",req,"",`希望休数：${count}日 / 上限${limit}日`,memo?"\\n【メモ】\\n"+memo:"","","よろしくお願いいたします。"].join("\\n").replace(/\\n{3,}/g,"\\n\\n")}
-
-function openMemo(y,m,d){selectedMemoDate={y,m,d};const data=loadData(y,m);memoTitle.textContent=`${m+1}/${d} のメモ`;memoInput.value=getMemo(y,m,d,data);memoModal.classList.remove("hidden")}
-
-function closeMemo(){memoModal.classList.add("hidden");selectedMemoDate=null}
-
-document.getElementById("saveMemoBtn").onclick=()=>{if(!selectedMemoDate)return;const {y,m,d}=selectedMemoDate,data=loadData(y,m);setMemo(y,m,d,memoInput.value,data);closeMemo();render();showToast("メモを保存しました")};
-
-document.getElementById("deleteMemoBtn").onclick=()=>{if(!selectedMemoDate)return;const {y,m,d}=selectedMemoDate,data=loadData(y,m);setMemo(y,m,d,"",data);closeMemo();render();showToast("メモを削除しました")};
-
-document.getElementById("cancelMemoBtn").onclick=closeMemo;
-
-memoModal.onclick=e=>{if(e.target===memoModal)closeMemo()};
-
-document.getElementById("prevBtn").onclick=()=>{current.setMonth(current.getMonth()-1);current.setDate(1);render()};
-
-document.getElementById("nextBtn").onclick=()=>{current.setMonth(current.getMonth()+1);current.setDate(1);render()};
-
-document.getElementById("todayBtn").onclick=()=>{current=new Date();current.setDate(1);render()};
-
-limitInput.oninput=()=>{saveLimit(current.getFullYear(),current.getMonth(),Number(limitInput.value||0));render()};
-
-document.getElementById("clearBtn").onclick=()=>{if(!confirm(`${current.getFullYear()}年${current.getMonth()+1}月をリセットしますか？`))return;localStorage.removeItem(keyFor(current.getFullYear(),current.getMonth()));render();showToast("リセットしました")};
-
-document.getElementById("lineBtn").onclick=()=>{location.href=`https://line.me/R/msg/text/?${encodeURIComponent(copyText.value)}`};
-
-document.getElementById("copyBtn").onclick=async()=>{try{await navigator.clipboard.writeText(copyText.value);showToast("コピーしました")}catch{copyText.focus();copyText.select();showToast("長押しでコピーしてね")}};
-
-document.getElementById("pdfBtn").onclick=()=>print();
-
-document.querySelectorAll("[data-theme]").forEach(b=>b.onclick=()=>{const t=b.dataset.theme;document.documentElement.dataset.theme=t;localStorage.setItem("kiboukyu-final-theme",t);showToast("色を変更しました")});
-
-const savedTheme=localStorage.getItem("kiboukyu-final-theme");if(savedTheme)document.documentElement.dataset.theme=savedTheme;
-
-render();
-
-</script>
-
+  <main class="app">
+    <header class="header">
+      <p class="label">希望休Webアプリ</p>
+      <h1 id="monthTitle">----</h1>
+    </header>
+
+    <section class="monthButtons">
+      <button id="prevBtn" type="button">前月</button>
+      <button id="todayBtn" type="button">今月</button>
+      <button id="nextBtn" type="button">翌月</button>
+    </section>
+
+    <section class="summary">
+      <div><span>希望休</span><strong id="requestCount">0日</strong></div>
+      <div><span>出勤</span><strong id="workCount">0日</strong></div>
+      <div><span>平日希望休</span><strong id="weekdayRequestCount">0日</strong></div>
+      <div><span>残り</span><strong id="remainCount">10日</strong></div>
+    </section>
+
+    <section class="limitBox">
+      <span>希望休上限</span>
+      <div>
+        <input id="limitInput" type="number" min="0" max="31" inputmode="numeric" />
+        <span>日まで</span>
+      </div>
+    </section>
+
+    <section class="weekdays">
+      <div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div>
+    </section>
+
+    <section id="calendar" class="calendar"></section>
+
+    <section class="actions">
+      <button id="lineBtn" class="primary" type="button">LINEで送る</button>
+      <button id="copyBtn" type="button">コピー</button>
+      <button id="pdfBtn" type="button">PDF</button>
+      <button id="clearBtn" class="danger" type="button">リセット</button>
+    </section>
+
+    <section class="themeBox">
+      <span>色テーマ</span>
+      <div class="themes">
+        <button data-theme="nature" type="button">🌿</button>
+        <button data-theme="blue" type="button">💙</button>
+        <button data-theme="red" type="button">❤️</button>
+        <button data-theme="gray" type="button">🩶</button>
+        <button data-theme="purple" type="button">🟣</button>
+      </div>
+    </section>
+
+    <textarea id="copyText" readonly></textarea>
+
+    <p class="hint">
+      日付をタップすると「出勤 ⇄ 希望休」に切り替わります。土日は固定休です。長押しでメモを入れられます。
+    </p>
+  </main>
+
+  <div id="memoModal" class="modal hidden">
+    <div class="modalInner">
+      <h2 id="memoTitle">メモ</h2>
+      <textarea id="memoInput" placeholder="例：🏥 病院、🎂 誕生日、✈️ 旅行"></textarea>
+      <div class="modalActions">
+        <button id="deleteMemoBtn" class="danger" type="button">削除</button>
+        <button id="cancelMemoBtn" type="button">閉じる</button>
+        <button id="saveMemoBtn" class="primary" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden">保存しました</div>
+
+  <script src="app.js"></script>
 </body>
-
 </html>
