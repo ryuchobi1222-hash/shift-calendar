@@ -2,50 +2,104 @@ const calendarEl = document.getElementById("calendar");
 const monthTitleEl = document.getElementById("monthTitle");
 const offCountEl = document.getElementById("offCount");
 const workCountEl = document.getElementById("workCount");
+const requestCountEl = document.getElementById("requestCount");
+const remainCountEl = document.getElementById("remainCount");
+const limitInput = document.getElementById("limitInput");
 
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const todayBtn = document.getElementById("todayBtn");
 const copyBtn = document.getElementById("copyBtn");
 const clearBtn = document.getElementById("clearBtn");
+const copyText = document.getElementById("copyText");
 
 let current = new Date();
 current.setDate(1);
 
+const defaultLimit = 10;
+
 function keyFor(year, monthIndex) {
   return `kiboukyu-${year}-${String(monthIndex + 1).padStart(2, "0")}`;
+}
+
+function limitKeyFor(year, monthIndex) {
+  return `kiboukyu-limit-${year}-${String(monthIndex + 1).padStart(2, "0")}`;
 }
 
 function dateKey(year, monthIndex, day) {
   return `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function loadMonth(year, monthIndex) {
+function loadData(year, monthIndex) {
   const raw = localStorage.getItem(keyFor(year, monthIndex));
   return raw ? JSON.parse(raw) : {};
 }
 
-function saveMonth(year, monthIndex, data) {
+function saveData(year, monthIndex, data) {
   localStorage.setItem(keyFor(year, monthIndex), JSON.stringify(data));
 }
 
+function loadLimit(year, monthIndex) {
+  const saved = localStorage.getItem(limitKeyFor(year, monthIndex));
+  return saved === null ? defaultLimit : Number(saved);
+}
+
+function saveLimit(year, monthIndex, value) {
+  localStorage.setItem(limitKeyFor(year, monthIndex), String(value));
+}
+
 function isWeekend(year, monthIndex, day) {
-  const w = new Date(year, monthIndex, day).getDay();
-  return w === 0 || w === 6;
+  const week = new Date(year, monthIndex, day).getDay();
+  return week === 0 || week === 6;
+}
+
+function isToday(year, monthIndex, day) {
+  const today = new Date();
+  return (
+    today.getFullYear() === year &&
+    today.getMonth() === monthIndex &&
+    today.getDate() === day
+  );
+}
+
+function getStatus(year, monthIndex, day, data) {
+  const key = dateKey(year, monthIndex, day);
+  if (data[key]) return data[key];
+  return isWeekend(year, monthIndex, day) ? "off" : "work";
+}
+
+function setStatus(year, monthIndex, day, status, data) {
+  const key = dateKey(year, monthIndex, day);
+  const defaultStatus = isWeekend(year, monthIndex, day) ? "off" : "work";
+
+  if (status === defaultStatus) {
+    delete data[key];
+  } else {
+    data[key] = status;
+  }
+
+  saveData(year, monthIndex, data);
+}
+
+function formatMonthTitle(year, monthIndex) {
+  return `${year}年${monthIndex + 1}月`;
 }
 
 function render() {
   const year = current.getFullYear();
   const monthIndex = current.getMonth();
-  const firstDay = new Date(year, monthIndex, 1).getDay();
-  const lastDate = new Date(year, monthIndex + 1, 0).getDate();
-  const today = new Date();
+  const data = loadData(year, monthIndex);
+  const limit = loadLimit(year, monthIndex);
 
-  const data = loadMonth(year, monthIndex);
+  monthTitleEl.textContent = formatMonthTitle(year, monthIndex);
+  limitInput.value = limit;
+
   calendarEl.innerHTML = "";
-  monthTitleEl.textContent = `${year}年${monthIndex + 1}月`;
 
-  for (let i = 0; i < firstDay; i++) {
+  const firstWeek = new Date(year, monthIndex, 1).getDay();
+  const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+
+  for (let i = 0; i < firstWeek; i++) {
     const blank = document.createElement("div");
     blank.className = "day blank";
     calendarEl.appendChild(blank);
@@ -53,59 +107,89 @@ function render() {
 
   let offCount = 0;
   let workCount = 0;
+  let requestCount = 0;
+  const requestDays = [];
+  const allOffDays = [];
 
-  for (let day = 1; day <= lastDate; day++) {
-    const id = dateKey(year, monthIndex, day);
+  for (let day = 1; day <= lastDay; day++) {
+    const status = getStatus(year, monthIndex, day, data);
+    const weekend = isWeekend(year, monthIndex, day);
+    const today = isToday(year, monthIndex, day);
 
-    // 未設定なら土日は希望休、平日は出勤
-    if (!data[id]) {
-      data[id] = isWeekend(year, monthIndex, day) ? "off" : "work";
+    if (status === "off") {
+      offCount++;
+      allOffDays.push(day);
+      if (!weekend) {
+        requestCount++;
+        requestDays.push(day);
+      }
+    } else {
+      workCount++;
     }
 
-    const status = data[id];
-    if (status === "off") offCount++;
-    if (status === "work") workCount++;
-
-    const cell = document.createElement("button");
-    cell.type = "button";
-    cell.className = `day ${status === "off" ? "off" : "work"} ${isWeekend(year, monthIndex, day) ? "weekend" : ""}`;
-
-    if (
-      today.getFullYear() === year &&
-      today.getMonth() === monthIndex &&
-      today.getDate() === day
-    ) {
-      cell.classList.add("today");
+    const dayEl = document.createElement("button");
+    dayEl.type = "button";
+    dayEl.className = "day";
+    if (status === "off") dayEl.classList.add("off");
+    if (weekend) dayEl.classList.add("weekend");
+    if (today) dayEl.classList.add("today");
+    if (requestCount > limit && status === "off" && !weekend) {
+      dayEl.classList.add("limitOver");
     }
 
-    cell.innerHTML = `
+    dayEl.innerHTML = `
       <span class="dayNumber">${day}</span>
       <span class="status">${status === "off" ? "希望休" : "出勤"}</span>
     `;
 
-    cell.addEventListener("click", () => {
-      data[id] = data[id] === "off" ? "work" : "off";
-      saveMonth(year, monthIndex, data);
+    dayEl.addEventListener("click", () => {
+      const currentStatus = getStatus(year, monthIndex, day, data);
+      const nextStatus = currentStatus === "off" ? "work" : "off";
+      setStatus(year, monthIndex, day, nextStatus, data);
       render();
     });
 
-    calendarEl.appendChild(cell);
+    calendarEl.appendChild(dayEl);
   }
 
-  saveMonth(year, monthIndex, data);
   offCountEl.textContent = `${offCount}日`;
   workCountEl.textContent = `${workCount}日`;
+  requestCountEl.textContent = `${requestCount}日`;
+
+  const remain = limit - requestCount;
+  remainCountEl.textContent = `${remain}日`;
+  remainCountEl.style.color = remain < 0 ? "var(--danger)" : "var(--text)";
+
+  copyText.value = makeCopyText(year, monthIndex, requestDays, allOffDays, requestCount, limit);
 }
 
-prevBtn.addEventListener("click", () => {
-  current.setMonth(current.getMonth() - 1);
-  render();
-});
+function makeCopyText(year, monthIndex, requestDays, allOffDays, requestCount, limit) {
+  const month = monthIndex + 1;
+  const requestText = requestDays.length
+    ? requestDays.map((d) => `${month}/${d}`).join("、")
+    : "なし";
 
-nextBtn.addEventListener("click", () => {
-  current.setMonth(current.getMonth() + 1);
+  const allOffText = allOffDays.length
+    ? allOffDays.map((d) => `${month}/${d}`).join("、")
+    : "なし";
+
+  return [
+    `【${year}年${month}月 希望休】`,
+    `平日希望休：${requestText}`,
+    `希望休数：${requestCount}日 / 上限${limit}日`,
+    ``,
+    `休み扱い全日：${allOffText}`
+  ].join("\n");
+}
+
+function changeMonth(amount) {
+  current.setMonth(current.getMonth() + amount);
+  current.setDate(1);
   render();
-});
+}
+
+prevBtn.addEventListener("click", () => changeMonth(-1));
+nextBtn.addEventListener("click", () => changeMonth(1));
 
 todayBtn.addEventListener("click", () => {
   current = new Date();
@@ -113,32 +197,35 @@ todayBtn.addEventListener("click", () => {
   render();
 });
 
+limitInput.addEventListener("input", () => {
+  const year = current.getFullYear();
+  const monthIndex = current.getMonth();
+  const value = Number(limitInput.value || 0);
+  saveLimit(year, monthIndex, value);
+  render();
+});
+
 clearBtn.addEventListener("click", () => {
   const year = current.getFullYear();
   const monthIndex = current.getMonth();
-  if (confirm("この月の設定をリセットしますか？")) {
-    localStorage.removeItem(keyFor(year, monthIndex));
-    render();
-  }
+  const ok = confirm(`${formatMonthTitle(year, monthIndex)}の変更をリセットしますか？`);
+  if (!ok) return;
+
+  localStorage.removeItem(keyFor(year, monthIndex));
+  render();
 });
 
 copyBtn.addEventListener("click", async () => {
-  const year = current.getFullYear();
-  const monthIndex = current.getMonth();
-  const data = loadMonth(year, monthIndex);
-
-  const offDays = Object.entries(data)
-    .filter(([, status]) => status === "off")
-    .map(([date]) => Number(date.slice(-2)))
-    .sort((a, b) => a - b);
-
-  const text = `${year}年${monthIndex + 1}月 希望休\n${offDays.join("日、")}日`;
-
   try {
-    await navigator.clipboard.writeText(text);
-    alert("希望休をコピーしました");
-  } catch {
-    alert(text);
+    await navigator.clipboard.writeText(copyText.value);
+    copyBtn.textContent = "コピーしました";
+    setTimeout(() => {
+      copyBtn.textContent = "希望休をコピー";
+    }, 1400);
+  } catch (error) {
+    copyText.focus();
+    copyText.select();
+    alert("コピーできない場合は、下の文章を長押ししてコピーしてください。");
   }
 });
 

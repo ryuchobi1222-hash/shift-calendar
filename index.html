@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>希望休カレンダー v1</title>
+  <title>希望休カレンダー v2</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -13,6 +13,7 @@
         <p class="label">希望休Webアプリ</p>
         <h1 id="monthTitle">----</h1>
       </div>
+
       <div class="monthButtons">
         <button id="prevBtn" type="button">前月</button>
         <button id="todayBtn" type="button">今月</button>
@@ -29,6 +30,22 @@
         <span class="summaryLabel">出勤</span>
         <strong id="workCount">0日</strong>
       </div>
+      <div>
+        <span class="summaryLabel">平日希望休</span>
+        <strong id="requestCount">0日</strong>
+      </div>
+      <div>
+        <span class="summaryLabel">残り</span>
+        <strong id="remainCount">--日</strong>
+      </div>
+    </section>
+
+    <section class="limitBox">
+      <label for="limitInput">希望休上限</label>
+      <div>
+        <input id="limitInput" type="number" min="0" max="31" inputmode="numeric" />
+        <span>日まで</span>
+      </div>
     </section>
 
     <section class="weekdays" aria-label="曜日">
@@ -42,8 +59,10 @@
       <button id="clearBtn" type="button" class="danger">この月をリセット</button>
     </section>
 
+    <textarea id="copyText" class="copyText" readonly aria-label="コピー内容"></textarea>
+
     <p class="hint">
-      日付をタップすると「出勤 ⇄ 希望休」に切り替わります。土日は最初から希望休になっています。
+      日付をタップすると「出勤 ⇄ 希望休」に切り替わります。土日は最初から希望休扱いです。平日に選んだ希望休だけ「平日希望休」に数えます。
     </p>
   </main>
 
